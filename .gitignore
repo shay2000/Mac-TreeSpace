@@ -1,0 +1,29 @@
+# Swift Package Manager / Xcode
+.build/
+.swiftpm/
+Packages/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Swift Package resolution
+Package.resolved
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Build artifacts
+*.o
+*.a
+*.dylib
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*~
