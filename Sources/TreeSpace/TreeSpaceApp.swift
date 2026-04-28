@@ -3,10 +3,12 @@ import AppKit
 
 @main
 struct TreeSpaceApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var state = AppState()
+    @AppStorage("runInMenuBar") private var runInMenuBar = false
 
     var body: some Scene {
-        WindowGroup("TreeSpace") {
+        WindowGroup("TreeSpace", id: "main") {
             ContentView()
                 .environmentObject(state)
                 .frame(minWidth: 980, minHeight: 620)
@@ -14,6 +16,7 @@ struct TreeSpaceApp: App {
                     NSApp.setActivationPolicy(.regular)
                     NSApp.activate(ignoringOtherApps: true)
                     Self.installAppIcon()
+                    state.scanIfNeededOnLaunch()
                 }
         }
         .windowStyle(.titleBar)
@@ -32,6 +35,21 @@ struct TreeSpaceApp: App {
                 .disabled(state.rootURL == nil || state.isScanning)
             }
         }
+
+        Settings {
+            SettingsView()
+                .environmentObject(state)
+        }
+
+        MenuBarExtra(
+            "TreeSpace",
+            systemImage: "internaldrive",
+            isInserted: $runInMenuBar
+        ) {
+            MenuBarContent()
+                .environmentObject(state)
+        }
+        .menuBarExtraStyle(.menu)
     }
 
     /// Load the PNG shipped in Resources and set it as the application icon.

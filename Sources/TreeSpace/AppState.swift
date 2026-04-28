@@ -32,6 +32,19 @@ final class AppState: ObservableObject {
     private var scanGeneration: Int = 0
     private var dupGeneration: Int = 0
 
+    private let backgroundScheduler = BackgroundScanScheduler()
+
+    init() {
+        backgroundScheduler.appState = self
+        backgroundScheduler.reconcile()
+    }
+
+    /// Re-read the periodic-rescan settings and rebuild the scheduler.
+    /// Called from the Settings UI when the toggle or interval changes.
+    func reconcileBackgroundScheduler() {
+        backgroundScheduler.reconcile()
+    }
+
     // MARK: - Folder picking
 
     func pickFolderAndScan() {
@@ -50,12 +63,35 @@ final class AppState: ObservableObject {
         if let url = rootURL { scan(url: url) }
     }
 
+    /// Called once at launch. If we've already scanned something this
+    /// session, do nothing. Otherwise scan the most recently scanned
+    /// folder (persisted in UserDefaults) — falling back to "/" so the
+    /// user sees something useful on a fresh install.
+    func scanIfNeededOnLaunch() {
+        guard rootURL == nil else { return }
+        let saved = UserDefaults.standard.string(forKey: AppState.lastRootPathKey) ?? ""
+        let url: URL
+        if !saved.isEmpty, FileManager.default.fileExists(atPath: saved) {
+            url = URL(fileURLWithPath: saved)
+        } else {
+            url = URL(fileURLWithPath: "/")
+        }
+        scan(url: url)
+    }
+
+    static let lastRootPathKey = "lastRootPath"
+
     // MARK: - Scan
 
-    func scan(url: URL) {
+    func scan(url: URL, qos: DispatchQoS.QoSClass = .userInitiated, isBackground: Bool = false) {
+        // A background rescan should never preempt a foreground one. The
+        // scheduler self-gates on this so the user's manual scan keeps
+        // priority.
+        if isBackground && isScanning { return }
         scanGeneration += 1
         let gen = scanGeneration
         rootURL = url
+        UserDefaults.standard.set(url.path, forKey: AppState.lastRootPathKey)
         root = nil
         duplicates = []
         isScanning = true
@@ -90,8 +126,8 @@ final class AppState: ObservableObject {
         let volAvailable: Int64? = rootValues?.volumeAvailableCapacityForImportantUsage
             ?? (rootValues?.volumeAvailableCapacity).map(Int64.init)
 
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let rootNode = FileNode(url: url, name: url.lastPathComponent, isDirectory: true)
+        DispatchQueue.global(qos: qos).async { [weak self] in
+            let rootNode = FileNode(url: url, name: url.displayName, isDirectory: true)
             var count = 0
             var report = ScanReport()
             var lastPost = Date()
