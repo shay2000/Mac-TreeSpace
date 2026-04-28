@@ -189,14 +189,13 @@ private struct CoverageCard: View {
             // Stacked bar: scanned vs everything else on the volume.
             if let used = volumeUsed, used > 0 {
                 GeometryReader { geo in
-                    HStack(spacing: 1) {
-                        Color.accentColor
-                            .frame(width: max(2, geo.size.width * CGFloat(root.size) / CGFloat(used)))
-                        if let gap = gapBytes, gap > 0 {
-                            Color.secondary.opacity(0.3)
-                        }
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.secondary.opacity(0.3))
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(Color.accentColor)
+                            .frame(width: max(2, geo.size.width * CGFloat(min(root.size, used)) / CGFloat(used)))
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
                 .frame(height: 10)
 
