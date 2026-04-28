@@ -113,13 +113,18 @@ enum InsightDetector {
         var summaries: [InsightSummary] = []
         for (cat, items) in bucket {
             let sorted = items.sorted { $0.size > $1.size }
-            let total = sorted.reduce(Int64(0)) { $0 + $1.size }
+            // Dedup by URL path — keep the first (largest) of any duplicates.
+            // Defensive: if the same path ever reaches the bucket twice it
+            // shows as a doubled row in the category card.
+            var seenPaths = Set<String>()
+            let unique = sorted.filter { seenPaths.insert($0.url.path).inserted }
+            let total = unique.reduce(Int64(0)) { $0 + $1.size }
             summaries.append(InsightSummary(
                 id: cat.rawValue,
                 category: cat,
                 totalSize: total,
-                count: sorted.count,
-                examples: Array(sorted.prefix(5))
+                count: unique.count,
+                examples: Array(unique.prefix(5))
             ))
         }
         return summaries.sorted { $0.totalSize > $1.totalSize }
