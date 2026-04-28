@@ -88,7 +88,9 @@ struct InsightSummary: Identifiable {
     let category: InsightCategory
     let totalSize: Int64
     let count: Int
-    let examples: [InsightHit]   // top N by size
+    /// Full deduplicated list, sorted descending by size. The card view
+    /// shows only the first 3; the detail sheet shows everything.
+    let items: [InsightHit]
 }
 
 enum InsightDetector {
@@ -124,7 +126,7 @@ enum InsightDetector {
                 category: cat,
                 totalSize: total,
                 count: unique.count,
-                examples: Array(unique.prefix(5))
+                items: unique
             ))
         }
         return summaries.sorted { $0.totalSize > $1.totalSize }

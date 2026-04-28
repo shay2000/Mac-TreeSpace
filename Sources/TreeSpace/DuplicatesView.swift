@@ -127,7 +127,7 @@ struct DuplicateGroupRow: View {
         alert.addButton(withTitle: "Move to Trash")
         alert.addButton(withTitle: "Cancel")
         if alert.runModal() == .alertFirstButtonReturn {
-            _ = state.moveToTrash(url)
+            Task { await state.moveToTrash(url) }
         }
     }
 }

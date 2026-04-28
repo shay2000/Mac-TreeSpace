@@ -360,9 +360,24 @@ private struct InsightsSection: View {
 }
 
 private struct InsightCard: View {
+    @EnvironmentObject var state: AppState
     let summary: InsightSummary
+    @State private var showDetail = false
 
     var body: some View {
+        Button {
+            showDetail = true
+        } label: {
+            cardContent
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showDetail) {
+            CategoryDetailView(summary: summary)
+                .environmentObject(state)
+        }
+    }
+
+    private var cardContent: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: summary.category.icon)
@@ -378,6 +393,9 @@ private struct InsightCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -389,10 +407,10 @@ private struct InsightCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            if !summary.examples.isEmpty {
+            if !summary.items.isEmpty {
                 Divider()
                 VStack(spacing: 2) {
-                    ForEach(summary.examples.prefix(3)) { hit in
+                    ForEach(summary.items.prefix(3)) { hit in
                         HStack {
                             Text(prettyPath(hit.url))
                                 .font(.caption2)
@@ -404,16 +422,22 @@ private struct InsightCard: View {
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
                         }
-                        .contentShape(Rectangle())
-                        .simultaneousGesture(TapGesture(count: 2).onEnded {
-                            NSWorkspace.shared.activateFileViewerSelecting([hit.url])
-                        })
+                    }
+                    if summary.count > 3 {
+                        HStack {
+                            Text("Show all \(summary.count) →")
+                                .font(.caption2)
+                                .foregroundStyle(.tint)
+                            Spacer()
+                        }
+                        .padding(.top, 2)
                     }
                 }
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
         .modifier(CardChrome())
     }
 

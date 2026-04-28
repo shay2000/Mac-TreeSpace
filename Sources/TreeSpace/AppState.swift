@@ -220,7 +220,14 @@ final class AppState: ObservableObject {
     // MARK: - File actions
 
     @discardableResult
-    func moveToTrash(_ url: URL) -> Bool {
+    func moveToTrash(_ url: URL) async -> Bool {
+        // Gate every destructive action behind Touch ID / password. Result
+        // is cached for ~60s so a batch trash prompts once.
+        let ok = await Auth.require(
+            reason: "Authenticate to move \"\(url.lastPathComponent)\" to the Trash"
+        )
+        guard ok else { return false }
+
         var trashed: NSURL?
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
