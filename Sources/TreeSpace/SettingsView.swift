@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct SettingsView: View {
     @EnvironmentObject var state: AppState
@@ -34,9 +35,31 @@ struct SettingsView: View {
             } header: {
                 Text("Background tracking")
             }
+
+            Section {
+                Label("Touch ID or your password is required before any file is moved to Trash.",
+                      systemImage: "touchid")
+                    .font(.caption)
+                Label("TreeSpace never deletes files outright — every removal goes to the Trash and can be restored from there.",
+                      systemImage: "trash")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Label("Full Disk Access lets TreeSpace measure protected folders. Granting it does not give the app any new ability to delete; the auth gate above still applies.",
+                      systemImage: "lock.shield")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("Open Privacy & Security…") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            } header: {
+                Text("Security")
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 480, height: 320)
+        .frame(width: 520, height: 560)
         .onChange(of: periodicRescan) { _ in state.reconcileBackgroundScheduler() }
         .onChange(of: intervalHours) { _ in state.reconcileBackgroundScheduler() }
     }

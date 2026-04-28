@@ -108,6 +108,7 @@ struct EmptyStateView: View {
 // MARK: - Tree row
 
 struct TreeRow: View {
+    @EnvironmentObject var state: AppState
     let node: FileNode
     let depth: Int
     let baseSize: Int64
@@ -228,8 +229,7 @@ struct TreeRow: View {
         alert.addButton(withTitle: "Move to Trash")
         alert.addButton(withTitle: "Cancel")
         if alert.runModal() == .alertFirstButtonReturn {
-            var trashed: NSURL?
-            try? FileManager.default.trashItem(at: node.url, resultingItemURL: &trashed)
+            Task { await state.moveToTrash(node.url) }
         }
     }
 }
